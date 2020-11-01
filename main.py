@@ -14,7 +14,7 @@ STORAGE_PATH = Path('/tmp/suren')
 def main():
     local_timezone = datetime.now().astimezone().tzinfo
     now = datetime.now(tz=local_timezone)
-    start = now.replace(hour=6, minute=0, second=0, microsecond=0)
+    start = now.replace(hour=3, minute=0, second=0, microsecond=0)
     start_f = start.isoformat()
     end_f = now.isoformat()
     if not STORAGE_PATH.is_file():
@@ -43,6 +43,10 @@ def main():
     for k, v in afk_status_to_sum.items():
         afk_status_to_sum2[k] = (v / 60 / 60)
     notification_history = json.loads(STORAGE_PATH.read_text(encoding='utf-8'))
+    notification_history2 = json.loads(STORAGE_PATH.read_text(encoding='utf-8'))
+    for k, v in notification_history2.items():
+        if v != date.today().isoformat():
+            del notification_history[k]
     pprint.pprint(notification_history)
     hours = afk_status_to_sum2.get('not-afk', 0.0)
     if hours >= 8.0:
