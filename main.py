@@ -6,12 +6,14 @@ import requests
 from pathlib import Path
 import json
 from datetime import date
+import rumps
+
 import subprocess
 
 STORAGE_PATH = Path('/tmp/suren')
 
 
-def main():
+def main(args):
     local_timezone = datetime.now().astimezone().tzinfo
     now = datetime.now(tz=local_timezone)
     start = now.replace(hour=3, minute=0, second=0, microsecond=0)
@@ -47,7 +49,6 @@ def main():
     for k, v in notification_history2.items():
         if v != date.today().isoformat():
             del notification_history[k]
-    pprint.pprint(notification_history)
     hours = afk_status_to_sum2.get('not-afk', 0.0)
     if hours >= 8.0:
         lower = int(hours)
@@ -55,9 +56,25 @@ def main():
             subprocess.check_call(
                 ['osascript', '-e', 'display notification "You\'ve reached your goal!" with title "Robot says"'])
             notification_history[lower] = date.today().isoformat()
-    STORAGE_PATH.write_text(json.dumps(notification_history), encoding='utf-8')
     pprint.pprint(afk_status_to_sum2)
 
 
+class StatusBarApp(rumps.App):
+    def __init__(self):
+        super(StatusBarApp, self).__init__('🐼', menu=['Pause'])
+        self.timer = rumps.Timer(callback=main, interval=60 * 15)
+        self.timer.start()
+
+    @rumps.clicked('Pause')
+    def pause_or_continue(self, sender):
+        if sender.title == 'Pause':
+            sender.title = 'Continue'
+            self.timer.stop()
+        elif sender.title == 'Continue':
+            self.timer.start()
+            sender.title = 'Pause'
+
+
 if __name__ == '__main__':
-    main()
+    rumps.debug_mode(True)
+    StatusBarApp().run()
